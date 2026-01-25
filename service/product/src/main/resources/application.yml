@@ -1,0 +1,56 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: service-product
+  datasource:
+    url: jdbc:postgresql://localhost:5432/product_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  secret: your-secret-key-should-be-at-least-256-bits-long-for-hs256
+  expiration: 3600000
+
+# Feign Client Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+
+# Service URLs for Feign Clients
+external:
+  order-service:
+    url: http://localhost:8083
+  ai:
+    classification:
+      url: localhost:8090
+    openai:
+      api-key: your-openai-api-key
+      base-url: https://api.openai.com
+
+logging:
+  level:
+    com.groom: DEBUG
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
