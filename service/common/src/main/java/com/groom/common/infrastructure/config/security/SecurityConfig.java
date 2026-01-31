@@ -34,46 +34,31 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-				.csrf(AbstractHttpConfigurer::disable)
-				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/test/**", "/swagger-ui/**", "/v3/api-docs/**","/api/orders/**").permitAll()
-						// http
-						// .csrf(csrf -> csrf.disable()) // 테스트를 위해 CSRF 비활성화
-						// .authorizeHttpRequests(auth -> auth
-						// .requestMatchers("/test/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-						// // ✅ 테스트 경로 허용!
-						// .anyRequest().authenticated())
-						// .authorizeHttpRequests(auth -> auth
-						// 인증/회원가입
-						.requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login").permitAll()
+			.csrf(AbstractHttpConfigurer::disable)
+			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.authorizeHttpRequests(auth -> auth
+				// ✅ 헬스체크/내부는 제일 먼저
+				.requestMatchers("/actuator/**", "/internal/**", "/api/v1/internal/**").permitAll()
 
-						// 결제 관련 엔드포인트 (ready/success/fail/confirm 등 포함)
-						.requestMatchers("/api/v1/payments/**").permitAll()
+				// 인증/공개 API
+				.requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login").permitAll()
+				.requestMatchers("/api/v1/payments/**").permitAll()
+				.requestMatchers("/api/v1/products/**").permitAll()
+				.requestMatchers("/api/v1/categories/**").permitAll()
 
-						// 상품 공개 API (구매자용)
-						.requestMatchers("/api/v1/products", "/api/v1/products/{productId}").permitAll()
+				// Swagger
+				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
-						// 내부 API (서비스 간 통신용)
-						.requestMatchers("/api/v1/internal/**").permitAll()
-						.requestMatchers("/actuator/**","/internal/**").permitAll()
+				// 기타
+				.requestMatchers("/", "/favicon.ico", "/error", "/test/**", "/api/orders/**").permitAll()
 
-						// 카테고리 공개 API
-						.requestMatchers("/api/v1/categories", "/api/v1/categories/{categoryId}").permitAll()
-
-						// Swagger
-						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-						// 루트/파비콘
-						.requestMatchers("/", "/favicon.ico", "/error").permitAll()
-
-						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-						.anyRequest().authenticated())
-				// 사용자 요청 Role 필터 검사
-				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+				.anyRequest().authenticated()
+			)
+			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}
+
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
