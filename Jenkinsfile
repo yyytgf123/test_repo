@@ -47,9 +47,6 @@ pipeline {
                           ./gradlew \
                           ${CHANGED_SERVICES.collect { ":service:${it}:bootJar" }.join(' ')} \
                           --no-daemon \
-                          --parallel \
-                          --build-cache \
-                          --configuration-cache
                         """
                     }
                 }
@@ -67,19 +64,16 @@ pipeline {
                     }
                 }
 
-                stage('Docker Build (parallel)') {
+                // ✅ 병렬 제거: 순차 Docker Build
+                stage('Docker Build') {
                     when {
                         expression { CHANGED_SERVICES && !CHANGED_SERVICES.isEmpty() }
                     }
                     steps {
                         script {
-                            def tasks = [:]
                             CHANGED_SERVICES.each { svc ->
-                                tasks[svc] = {
-                                    buildDockerImage(svc)
-                                }
+                                buildDockerImage(svc)
                             }
-                            parallel tasks
                         }
                     }
                 }
@@ -107,21 +101,23 @@ pipeline {
                     }
                 }
 
+                // ✅ 병렬 제거: 순차 Push
                 stage('Push Images') {
                     steps {
                         script {
-                            parallel CHANGED_SERVICES.collectEntries { svc ->
-                                [(svc): { pushImage(svc) }]
+                            CHANGED_SERVICES.each { svc ->
+                                pushImage(svc)
                             }
                         }
                     }
                 }
 
+                // ✅ 병렬 제거: 순차 Deploy
                 stage('Deploy ECS (Update Service)') {
                     steps {
                         script {
-                            parallel CHANGED_SERVICES.collectEntries { svc ->
-                                [(svc): { deployService(serviceName: svc) }]
+                            CHANGED_SERVICES.each { svc ->
+                                deployService(serviceName: svc)
                             }
                         }
                     }
