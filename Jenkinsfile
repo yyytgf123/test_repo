@@ -32,7 +32,7 @@ pipeline {
                 stage('Detect Changes') {
                     steps {
                         script {
-                            CHANGED_SERVICES = getChangedServices() ?: []
+                            CHANGED_SERVICES = getChangedServices()
                             echo "Changed services: ${CHANGED_SERVICES}"
                         }
                     }
@@ -46,7 +46,10 @@ pipeline {
                         sh """
                           ./gradlew \
                           ${CHANGED_SERVICES.collect { ":service:${it}:bootJar" }.join(' ')} \
-                          --no-daemon
+                          --no-daemon \
+                          --parallel \
+                          --build-cache \
+                          --configuration-cache
                         """
                     }
                 }
@@ -61,21 +64,22 @@ pipeline {
                           ${CHANGED_SERVICES.collect { ":service:${it}:test" }.join(' ')} \
                           --no-daemon
                         """
-//                         sleep time: 180, unit: 'SECONDS'
                     }
                 }
 
-                // ✅ 병렬 제거 + 스테이지 이름 변경
-                stage('Docker Build') {
+                stage('Docker Build (parallel)') {
                     when {
                         expression { CHANGED_SERVICES && !CHANGED_SERVICES.isEmpty() }
                     }
                     steps {
                         script {
+                            def tasks = [:]
                             CHANGED_SERVICES.each { svc ->
-                                echo "Docker build: ${svc}"
-                                buildDockerImage(svc)
+                                tasks[svc] = {
+                                    buildDockerImage(svc)
+                                }
                             }
+                            parallel tasks
                         }
                     }
                 }
@@ -103,25 +107,21 @@ pipeline {
                     }
                 }
 
-                // ✅ 병렬 제거
                 stage('Push Images') {
                     steps {
                         script {
-                            CHANGED_SERVICES.each { svc ->
-                                echo "Push image: ${svc}"
-                                pushImage(svc)
+                            parallel CHANGED_SERVICES.collectEntries { svc ->
+                                [(svc): { pushImage(svc) }]
                             }
                         }
                     }
                 }
 
-                // ✅ 병렬 제거
                 stage('Deploy ECS (Update Service)') {
                     steps {
                         script {
-                            CHANGED_SERVICES.each { svc ->
-                                echo "Deploy service: ${svc}"
-                                deployService(serviceName: svc)
+                            parallel CHANGED_SERVICES.collectEntries { svc ->
+                                [(svc): { deployService(serviceName: svc) }]
                             }
                         }
                     }
