@@ -38,7 +38,7 @@ public class SecurityConfig {
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
 				// ✅ 헬스체크/내부는 제일 먼저
-				.requestMatchers("/actuator/**", "/internal/**", "/api/v1/internal/**").permitAll()
+				.requestMatchers("/health", "/internal/**", "/api/v1/internal/**").permitAll()
 
 				// 인증/공개 API
 				.requestMatchers("/api/v1/auth/signup", "/api/v1/auth/login").permitAll()
