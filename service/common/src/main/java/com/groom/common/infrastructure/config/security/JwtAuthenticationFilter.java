@@ -38,6 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String path = getPath(request);
+		if ("/health".equals(path)) return true;
 
 		// 필요하면 더 추가 가능
 		if ("/swagger-ui.html".equals(path)) return true;
