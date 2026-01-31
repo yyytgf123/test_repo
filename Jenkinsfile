@@ -32,7 +32,7 @@ pipeline {
                 stage('Detect Changes') {
                     steps {
                         script {
-                            CHANGED_SERVICES = getChangedServices()
+                            CHANGED_SERVICES = getChangedServices() ?: []
                             echo "Changed services: ${CHANGED_SERVICES}"
                         }
                     }
@@ -46,7 +46,7 @@ pipeline {
                         sh """
                           ./gradlew \
                           ${CHANGED_SERVICES.collect { ":service:${it}:bootJar" }.join(' ')} \
-                          --no-daemon \
+                          --no-daemon
                         """
                     }
                 }
@@ -64,7 +64,7 @@ pipeline {
                     }
                 }
 
-                // ✅ 병렬 제거: 순차 Docker Build
+                // ✅ 병렬 제거 + 스테이지 이름 변경
                 stage('Docker Build') {
                     when {
                         expression { CHANGED_SERVICES && !CHANGED_SERVICES.isEmpty() }
@@ -72,6 +72,7 @@ pipeline {
                     steps {
                         script {
                             CHANGED_SERVICES.each { svc ->
+                                echo "Docker build: ${svc}"
                                 buildDockerImage(svc)
                             }
                         }
@@ -101,22 +102,24 @@ pipeline {
                     }
                 }
 
-                // ✅ 병렬 제거: 순차 Push
+                // ✅ 병렬 제거
                 stage('Push Images') {
                     steps {
                         script {
                             CHANGED_SERVICES.each { svc ->
+                                echo "Push image: ${svc}"
                                 pushImage(svc)
                             }
                         }
                     }
                 }
 
-                // ✅ 병렬 제거: 순차 Deploy
+                // ✅ 병렬 제거
                 stage('Deploy ECS (Update Service)') {
                     steps {
                         script {
                             CHANGED_SERVICES.each { svc ->
+                                echo "Deploy service: ${svc}"
                                 deployService(serviceName: svc)
                             }
                         }
