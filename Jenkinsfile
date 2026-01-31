@@ -61,6 +61,7 @@ pipeline {
                           ${CHANGED_SERVICES.collect { ":service:${it}:test" }.join(' ')} \
                           --no-daemon
                         """
+//                         sleep time: 180, unit: 'SECONDS'
                     }
                 }
 
