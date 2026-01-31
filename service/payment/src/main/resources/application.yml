@@ -15,7 +15,7 @@ spring:
   application:
     name: service-cart
   datasource:
-    url: jdbc:postgresql://54.180.118.211:5432/payment_db
+    url: jdbc:postgresql://54.180.155.163:5432/payment_db
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver

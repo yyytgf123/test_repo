@@ -7,7 +7,7 @@ pipeline {
         GRADLE_USER_HOME = "/var/jenkins_home/.gradle"
 
         AWS_REGION     = "ap-northeast-2"
-        AWS_ACCOUNT_ID = "900808296075"
+        AWS_ACCOUNT_ID = "291176052382"
         ECR_REGISTRY   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
         IMAGE_TAG = "${BUILD_NUMBER}-${GIT_COMMIT[0..7]}"
